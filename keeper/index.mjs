@@ -20,7 +20,7 @@ import { privateKeyToAccount } from "viem/accounts";
 
 const abi = JSON.parse(fs.readFileSync(new URL("./abi.json", import.meta.url)));
 // DEPLOYMENT may be absolute or relative to the keeper folder
-const depPath = process.env.DEPLOYMENT ? new URL(process.env.DEPLOYMENT, new URL("./", import.meta.url)) : new URL("../contracts/deployments/elysiumMainnetV4.json", import.meta.url);
+const depPath = process.env.DEPLOYMENT ? new URL(process.env.DEPLOYMENT, new URL("./", import.meta.url)) : new URL("../contracts/deployments/elysiumTestnet.json", import.meta.url);
 if (!fs.existsSync(depPath)) {
   // No deployment file yet: stay up (so the host's health check passes) but do nothing on-chain.
   const PORT0 = Number(process.env.PORT || 8787);
@@ -40,7 +40,8 @@ if (!KEEPER_KEY) {
   process.exit(1);
 }
 // RPC_URL may list several endpoints separated by commas; they are tried in order (failover).
-const RPCS = (process.env.RPC_URL || "https://testnet-rpc.elysium.kinetiq.xyz").split(",").map((x) => x.trim()).filter(Boolean);
+// DRPC_URL (a private, keyed endpoint kept in secrets) is tried first when set.
+const RPCS = [process.env.DRPC_URL, ...(process.env.RPC_URL || "https://testnet-rpc.elysium.kinetiq.xyz").split(",")].map((x) => (x || "").trim()).filter(Boolean);
 const RPC = RPCS[0];
 const transport = () => (RPCS.length > 1 ? fallback(RPCS.map((u) => httpT(u, { timeout: 20_000, retryCount: 1 })), { retryCount: 2 }) : httpT(RPC));
 const POLL = Number(process.env.POLL_MS || 5000);
@@ -241,6 +242,31 @@ function readBody(req, max) {
   });
 }
 
+// Read-only JSON-RPC proxy for the website, so the private RPC key never reaches the browser.
+const RPC_READ = new Set(["eth_chainId", "net_version", "eth_blockNumber", "eth_getBlockByNumber", "eth_getBlockByHash", "eth_call", "eth_getLogs", "eth_getBalance", "eth_getCode", "eth_getStorageAt", "eth_getTransactionCount", "eth_getTransactionByHash", "eth_getTransactionReceipt", "eth_estimateGas", "eth_gasPrice", "eth_maxPriorityFeePerGas", "eth_feeHistory"]);
+const rpcHits = new Map();
+function rpcLimited(ip, limit = 1200, windowMs = 60_000) {
+  const now = Date.now();
+  const h = (rpcHits.get(ip) || []).filter((t) => now - t < windowMs);
+  h.push(now); rpcHits.set(ip, h);
+  if (rpcHits.size > 5000) for (const [k, v] of rpcHits) if (!v.some((t) => now - t < windowMs)) rpcHits.delete(k);
+  return h.length > limit;
+}
+async function rpcProxy(body) {
+  const calls = Array.isArray(body) ? body : [body];
+  if (!calls.length || calls.length > 50) throw ipfs.httpError(400, "bad request");
+  for (const c of calls) if (!c || !RPC_READ.has(c.method)) throw ipfs.httpError(403, "method not allowed");
+  let last;
+  for (const u of RPCS) {
+    try {
+      const r = await fetch(u, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(25_000) });
+      if (r.ok) return await r.text();
+      last = r.status;
+    } catch { last = 502; }
+  }
+  throw ipfs.httpError(502, `rpc unavailable (${last})`);
+}
+
 function serve() {
   const CORS = process.env.CORS_ORIGIN || "*";
   http
@@ -253,7 +279,7 @@ function serve() {
       try {
         const u = new URL(req.url, "http://x");
         let p = u.pathname.replace(/\/+$/, "") || "/";
-        // behind a path-routing proxy (e.g. served under /keeper): strip the prefix
+        // behind a path-routing proxy (e.g. Replit serves this under /keeper): strip the prefix
         const PREFIX = (process.env.API_PREFIX || "").replace(/\/+$/, "");
         if (PREFIX && (p === PREFIX || p.startsWith(PREFIX + "/"))) p = p.slice(PREFIX.length) || "/";
         if (req.method === "OPTIONS") return (res.statusCode = 204), res.end();
@@ -264,6 +290,12 @@ function serve() {
           const t = [...state.tokens.values()].find((x) => x.token.toLowerCase() === m[1].toLowerCase());
           if (!t) return json(404, { error: "not found" });
           return json(200, await tokenView(t));
+        }
+        if (p === "/rpc" && req.method === "POST") {
+          const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+          if (rpcLimited(ip)) return json(429, { error: "Too many requests" });
+          const out = await rpcProxy(JSON.parse((await readBody(req, 200_000)).toString() || "{}"));
+          res.statusCode = 200; res.setHeader("content-type", "application/json"); return res.end(out);
         }
         if (p === "/ipfs/launch" && req.method === "POST") {
           const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();

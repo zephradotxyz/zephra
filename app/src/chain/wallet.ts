@@ -1,7 +1,7 @@
 // Wallet connection: injected browser wallets (MetaMask, Rabby, OKX…).
 // Also keeps a local history of the transactions sent from this app, for tracking.
-import { createPublicClient, createWalletClient, custom, http, type Address, type EIP1193Provider, type Hash, type WalletClient } from "viem";
-import { chainFor, getNetwork } from "./config";
+import { createPublicClient, createWalletClient, custom, fallback, http, type Address, type EIP1193Provider, type Hash, type WalletClient } from "viem";
+import { API_URL, chainFor, getNetwork } from "./config";
 
 declare global {
   interface Window {
@@ -79,7 +79,9 @@ export const wallet = {
 
 export const publicClient = () => {
   const n = getNetwork();
-  return createPublicClient({ chain: chainFor(n), transport: http(n.rpc) });
+  // Reads go through our own API first (it holds the private RPC key), then the public RPC as a backup.
+  const urls = [API_URL ? `${window.location.origin}${API_URL}/rpc` : "", n.rpc].filter(Boolean);
+  return createPublicClient({ chain: chainFor(n), transport: urls.length > 1 ? fallback(urls.map((u) => http(u)), { retryCount: 1 }) : http(urls[0]) });
 };
 
 export const hasInjected = () => typeof window !== "undefined" && !!window.ethereum;
