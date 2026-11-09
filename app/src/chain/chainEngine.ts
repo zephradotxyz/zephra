@@ -588,10 +588,23 @@ export class ChainEngine extends Engine {
     const { request } = await pc.simulateContract({ address, abi, functionName, args, value, account } as never).catch((e) => {
       throw new ZephraError(friendlyError(e));
     });
+    // Give the fee cap headroom over the current base fee. Wallets often quote the exact base fee, and a
+    // tiny rise before the transaction is sent makes the node reject it ("max fee per gas less than block base fee").
+    const fees: { maxFeePerGas?: bigint; maxPriorityFeePerGas?: bigint } = {};
+    try {
+      const base = (await pc.getBlock({ blockTag: "latest" })).baseFeePerGas;
+      if (base != null) {
+        const tip = await pc.estimateMaxPriorityFeePerGas().catch(() => 0n);
+        fees.maxPriorityFeePerGas = tip;
+        fees.maxFeePerGas = base * 2n + tip;
+      }
+    } catch {
+      /* let the wallet choose the fees */
+    }
     let hash: Hash;
     try {
       // sign with the wallet's own account: the injected wallet
-      hash = await wc.writeContract({ ...(request as object), account: wc.account ?? account, chain: wc.chain } as never);
+      hash = await wc.writeContract({ ...(request as object), ...fees, account: wc.account ?? account, chain: wc.chain } as never);
     } catch (e) {
       throw new ZephraError(friendlyError(e));
     }
@@ -630,7 +643,10 @@ export class ChainEngine extends Engine {
     if (!url) return;
     for (let i = 0; i < 4; i++) {
       try {
-        const r = await fetch(url);
+        const cid = uri.replace(/^ipfs:\/\//, "").replace(/^ipfs\//, "");
+        let r = await fetch(url).catch(() => null);
+        // If our own API is down or its gateway is rate-limited, read straight from a public gateway.
+        if (!r?.ok) r = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
         if (!r.ok) throw new Error(String(r.status));
         const j = (await r.json()) as { description?: string; image?: string; links?: { website?: string; x?: string; telegram?: string } };
         const safe = (u?: string) => (u && /^https:\/\//i.test(u) ? u : undefined);

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Wallet, X, Copy, ExternalLink, LogOut, KeyRound, Droplets, CheckCircle2, AlertCircle, Loader2, Settings2 } from "lucide-react";
 import { useEngine, useWallet, getChain, toast } from "../store";
-import { connectInjected, disconnect, hasInjected, injectedName, clearTxs } from "../chain/wallet";
+import { connectInjected, switchAccount, disconnect, hasInjected, injectedName, clearTxs } from "../chain/wallet";
 import { addrUrl, getNetwork, txUrl, getDeployment } from "../chain/config";
 import { YOU } from "../engine/engine";
 import { fmt, short, ago } from "../lib/format";
@@ -125,9 +125,10 @@ export function WalletModal({ open, onClose }: { open: boolean; onClose: () => v
               <a aria-label="View on explorer" href={addrUrl(w.address)} target="_blank" rel="noreferrer" className="text-muted hover:text-accent"><ExternalLink size={13} /></a>
             </div>
             <div className="num mt-3 text-2xl font-bold">{fmt(e.bal(YOU), 4)} <span className="text-sm text-muted">HYPE</span></div>
-            {e.bal(YOU) < 0.01 && <p className="mt-1 text-xs text-warn">{"Your balance is empty. Bridge HYPE from HyperEVM to Elysium using the official Elysium bridge."}</p>}
+            {e.bal(YOU) < 0.01 && <p className="mt-1 text-xs text-warn">{"This account has no HYPE. If your wallet shows HYPE on another account, press Switch account and allow that one. Otherwise bridge HYPE to Elysium with the official bridge."}</p>}
           </div>
           <div className={"mt-3 grid gap-2 grid-cols-1"}>
+            <button disabled={busy} onClick={() => run(switchAccount)} className="btn btn-ghost h-10 text-xs"><Wallet size={14} />Switch account</button>
             <button onClick={() => { disconnect(); onClose(); }} className="btn btn-ghost h-10 text-xs hover:!text-down"><LogOut size={14} />Disconnect</button>
           </div>
           <TxList />

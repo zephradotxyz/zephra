@@ -145,6 +145,16 @@ export async function connectInjected() {
   return address;
 }
 
+/** Open the wallet's account picker so the user can allow a different account for this site. */
+export async function switchAccount() {
+  if (!window.ethereum) throw new Error("No browser wallet found.");
+  await window.ethereum.request({ method: "wallet_requestPermissions", params: [{ eth_accounts: {} }] });
+  const accs = (await window.ethereum.request({ method: "eth_accounts" })) as Address[];
+  if (!accs.length) throw new Error("No account was allowed.");
+  setInjected(accs[0], Number(await window.ethereum.request({ method: "eth_chainId" })));
+  return accs[0];
+}
+
 /** Called before every transaction: make sure an injected wallet is on the app's network. */
 export async function ensureChain() {
   if (state.kind !== "injected" || !window.ethereum) return;

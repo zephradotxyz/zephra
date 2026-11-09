@@ -392,7 +392,7 @@ export default function Create() {
                   </div>
                   <button onClick={submit} disabled={!valid || busy || !!settingsError} className="btn btn-accent mt-4 h-12 w-full"><Rocket size={17} />{needsWallet ? "Connect a wallet to launch" : busy ? "Launching…" : `Launch ${symbol || "token"}`}</button>
                   {settingsError && <p className="mt-2 text-xs text-down">{settingsError}</p>}
-                  {!needsWallet && total > e.bal(YOU) && <p className="mt-2 text-xs text-down">Insufficient HYPE balance.</p>}
+                  {!needsWallet && total > e.bal(YOU) && <p className="mt-2 text-xs text-down">Insufficient HYPE on the connected account. Click your address at the top, then Switch account, to use a different one.</p>}
                   <p className="mt-2 text-[11px] text-faint">This sends a real transaction to ZephraLaunchpad.createAdvanced on {getNetwork().name}.</p>
                 </div>
               </div>
