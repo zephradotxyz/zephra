@@ -88,12 +88,22 @@ export async function fetchCid(cid) {
   const file = path.join(STORE, cid);
   if (fs.existsSync(file)) return fs.readFileSync(file);
   if (PROVIDER === "local") throw httpError(404, "not found");
-  const r = await fetch(GATEWAY + cid, { signal: AbortSignal.timeout(15_000) });
-  if (!r.ok) throw httpError(r.status === 404 ? 404 : 502, `gateway ${r.status}`);
-  const buf = Buffer.from(await r.arrayBuffer());
-  if (buf.length > MAX_BODY) throw httpError(413, "too large");
-  cachePut(cid, buf);
-  return buf;
+  // Public gateways rate-limit (429) often, so try several before giving up.
+  const gateways = [...new Set([GATEWAY, "https://gateway.pinata.cloud/ipfs/", "https://w3s.link/ipfs/", "https://dweb.link/ipfs/"])];
+  let last = 502;
+  for (const g of gateways) {
+    try {
+      const r = await fetch(g + cid, { signal: AbortSignal.timeout(15_000), redirect: "follow" });
+      if (!r.ok) { last = r.status; continue; }
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (buf.length > MAX_BODY) throw httpError(413, "too large");
+      cachePut(cid, buf);
+      return buf;
+    } catch (e) {
+      if (e.status) throw e;
+    }
+  }
+  throw httpError(last === 404 ? 404 : 502, `gateway ${last}`);
 }
 
 // --- launch bundle: logo + metadata JSON → ipfs://<metadata CID>
