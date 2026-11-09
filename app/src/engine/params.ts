@@ -1,0 +1,41 @@
+// Zephra v1 parameters — identical to the smart contract constants.
+export const P = {
+  G: 1000, // graduation target G (HYPE), illustrative
+  CREATION_FEE: 0.5,
+  SUPPLY: 1_000_000_000,
+  CURVE_SUPPLY: 800_000_000,
+  VIRTUAL_TOKENS: 1_073_000_000,
+  DEV_BUY_MAX: 100_000_000,
+  DEV_VEST: 3 * 86400,
+  TAX_WINDOW: 60,
+  TAX_START: 1.0,
+  TAX_END: 0.02,
+  BOND_FEE: 0.01,
+  FAIL_AGE: 7 * 86400,
+  FAIL_IDLE: 72 * 3600,
+  POOL_SHARE: 0.85,
+  SEED_SHARE: 0.1,
+  PROTO_SHARE: 0.05,
+  SPOT_FEE: 0.02, // creator 0.75%, dev 0.5%, LP 0.25%, Zephra 0.5%
+  WARMUP: 30 * 60,
+  LOW_LEV_PERIOD: 24 * 3600,
+  TWAP_EXEC: 180,
+  TWAP_MARK: 60,
+  TWAP_SETTLE: 3600,
+  MAX_DEV: 0.03,
+  MAX_IMPACT: 0.005,
+  PERP_FEE: 0.005,
+  PERP_FEE_VAULT: 0.003,
+  PERP_FEE_PROTO: 0.002,
+  MAINT: 0.1,
+  LIQ_REWARD: 0.01,
+  WALLET_CAP: 0.2,
+  PROFIT_CAP: 2 / 3,
+  MAX_FUNDING_PER_SEC: 0.001 / 3600,
+  LP_COOLDOWN: 3600,
+  CLOSE_ONLY_PERIOD: 72 * 3600,
+  GUARD_NAV_MULT: 5,
+  OBS_SPACING: 10,
+} as const;
+
+export const V0 = (P.G * (P.VIRTUAL_TOKENS - P.CURVE_SUPPLY)) / P.CURVE_SUPPLY;

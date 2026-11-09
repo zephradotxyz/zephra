@@ -1,0 +1,25 @@
+{
+  "network": "elysiumMainnet",
+  "chainId": 99901,
+  "version": "v4",
+  "deployedAt": "2026-11-09T07:31:40.757Z",
+  "blockNumber": 3036337,
+  "contracts": {
+    "ZephraConfig": "0x21DC69A011404BF667988169e528DDf22e563796",
+    "MarketFactory": "0x16c898FCAb0935DAf101f6d34aF4F90971155aaA",
+    "PoolViewFactory": "0x92bE66d06a3D8c7Be5f01E00150A0A41D46A509A",
+    "TokenImplementation": "0x3976B4427F3e5064f0222f60c84A1dA0F535D6B2",
+    "Create2Deployer": "0x43815Ca62654313Dfa355dE3f8a8986b614E4611",
+    "ZephraV4Launchpad": "0x009557496762b804b28C3D051318Aee2b8a8AACC",
+    "ZephraRouter": "0x4c104E998E5024aBB2a098D4dE1fcf01cc8D43d4",
+    "ZephraQuoter": "0xAfc50B0208576D486C5AfA767C182AD0617B939f",
+    "PoolManager": "0xe2e105d3f7209a9da11f83ccf3e7398a753823f1"
+  },
+  "params": {
+    "gradTarget": "97000000000000000000",
+    "creationFee": "50000000000000000",
+    "admin": "0x11341c88Bbf32fF62741324d7B533CB65dBf2159",
+    "guardian": "0x00ff4A225bc94724Da0286dF8D5fc8B00FFb35De",
+    "treasury": "0xb51AB221225470514985D931Fa948D7E1a43071E"
+  }
+}

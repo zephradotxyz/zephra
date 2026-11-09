@@ -1,0 +1,13 @@
+{
+  "name": "@workspace/zephra-keeper",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Keeper + indexer API for Zephra (heartbeat, liquidations, profit cap, LP withdrawals, market status, markFailed)",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "viem": "2.57.13"
+  }
+}
