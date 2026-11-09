@@ -12,13 +12,13 @@ export const SITE = {
   jurisdiction: "",
   /** Date shown on the legal pages */
   legalUpdated: "November 1, 2026",
-  /** Set to true once the contract source is verified on Elyscan; the "Open source" check then turns green. */
-  contractsVerified: false,
+  /** Contract source is verified on Elyscan and published on GitHub. */
+  contractsVerified: true,
   socials: {
     x: "https://x.com/Zephra_xyz",
     telegram: "", // https://t.me/…
     discord: "",
-    github: "",
+    github: "https://github.com/zephradotxyz/zephra",
   },
 };
 

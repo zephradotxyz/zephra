@@ -36,7 +36,7 @@
 | ZephraConfig | `0x21DC69A011404BF667988169e528DDf22e563796` |
 | MarketFactory | `0x16c898FCAb0935DAf101f6d34aF4F90971155aaA` |
 
-The compiled sources in this repository reproduce the deployed bytecode. See [`contracts/verification/v4/README.txt`](contracts/verification/v4/README.txt).
+All contracts above are source-verified on [Elyscan](https://elyscan.live). The compiled sources in this repository reproduce the deployed bytecode. See [`contracts/verification/v4/README.txt`](contracts/verification/v4/README.txt).
 
 ## Fees
 
